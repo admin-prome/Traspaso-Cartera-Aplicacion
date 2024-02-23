@@ -1,0 +1,51 @@
+﻿.file-drop-zone {
+    position: relative;
+    width: 300px; /* Reduced width */
+    height: 110px; /* Reduced height */
+    border: 2px dashed #808080; /* Gray border */
+    background-color: #f0f0f0; /* Gray background */
+    overflow: hidden; /* Hide overflowing content */
+    box-sizing: border-box; /* Include border in element's total width and height */
+    padding: 15px; /* Adjusted padding */
+    text-align: center; /* Center text horizontally */
+    line-height: 1.5; /* Adjusted line height */
+    font-size: 14px; /* Adjusted font size */
+    transition: background-color 0.3s; /* Add transition for smoother hover effect */
+}
+
+    .file-drop-zone.hover {
+        background: rgba(38, 161, 69, 0.2); /* Less intense hover color with transparency */
+        color: white; /* Text color on hover */
+    }
+
+/* Input file */
+.input-file {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0; /* Hide the input file visually */
+    cursor: pointer; /* Show pointer cursor on hover */
+}
+@keyframes rotateP {
+    from {
+        transform: rotateY(0deg); /* Start with no rotation */
+    }
+
+    to {
+        transform: rotateY(360deg); /* Rotate horizontally 360 degrees */
+    }
+}
+
+.rotating-p {
+    position: relative;
+    width: 100px; /* Adjust width as needed */
+    height: 100px; /* Adjust height as needed */
+}
+
+    .rotating-p img {
+        width: 100%; /* Adjust width as needed */
+        height: 100%; /* Adjust height as needed */
+        animation: rotateP 2s linear infinite; /* Adjust animation duration and timing */
+    }

@@ -1,0 +1,217 @@
+﻿@page "/"
+@using Microsoft.Extensions.Configuration
+@inject IJSRuntime JSRuntime;
+@inject IConfiguration Configuration
+@implements IAsyncDisposable
+@using ClosedXML.Excel
+@using System.IO
+@using System.Net;
+@using System.Net.Http;
+@using System.Net.Http.Headers;
+@using System.Text;
+@using TraspasoDeCartera.Data
+@using TraspasoDeCartera.Services;
+@using TraspasoDeCartera.Utils;
+
+<div class="container mt-5">
+    <h2 class="mb-4" style="color: black">Traspaso de Cartera</h2>
+    <div @ref="fileDropContainer" class="file-drop-zone @HoverClass"
+    @ondragenter="OnDragEnter"
+    @ondragleave="OnDragLeave" @ondragover:preventDefault="true"
+    @ondragover="OnDragEnter">
+        Arrastra un archivo aquí o haz clic para elegir uno.
+        <InputFile @ref="inputFile" multiple OnChange="@OnChange" hidden />
+    </div>
+
+    <hr class="my-4">
+
+    @if (excelData != null)
+    {
+        <div class="row mt-4">
+            <div class="col">
+                <h4 class="mb-3">Validaciones Realizadas:</h4>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Solicitud</th>
+                                <th>DNICliente</th>
+                                <th>Aceptado</th>
+                                <th>NombreEjecutivoAdmin</th>
+                                <th>DNIEjecutivoAdmin</th>
+                                <th>Estado</th>
+                                <th>Error</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in excelData)
+                            {
+                                <tr>
+                                    <td style="font-size: smaller;">@row.Solicitud</td>
+                                    <td style="font-size: smaller;">@row.DNICliente</td>
+                                    <td style="font-size: smaller;">@row.Aceptado</td>
+                                    <td style="font-size: smaller;">@row.NombreEjecutivoAdmin</td>
+                                    <td style="font-size: smaller;">@row.DNIEjecutivoAdmin</td>
+                                    <td>
+                                        @if (row.HasError)
+                                        {
+                                            <span class="badge bg-danger">Error</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Validado</span>
+                                        }
+                                    </td>
+                                    <td style="max-width: 150px; font-size: smaller;">@row.ErrorMessage</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <hr class="my-4">
+
+        <div class="row mt-4">
+            <div class="col">
+                @if (errorCount == 0 && !clicked)
+                {
+                    <button class="btn btn-success" @onclick="UploadToFTP">Confirmar Traspasos</button>
+                }
+                else
+                {
+                    <button class="btn btn-success" disabled>Confirmar Traspasos</button>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row mt-4">
+            @if (IsProcessingFile)
+            {
+                <div class="spinner-container d-flex justify-content-center align-items-center">
+                    <div class="rotating-p">
+                        <img src="/images/logoprome.png" alt="Rotating P" style="width: 150px; height: 150px;" />
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private string downloadLink;
+    private string textContent;
+    private string textContentFileName;
+    private string textContentFilePath;
+    private int errorCount;
+    private bool clicked;
+    private List<ExcelRow> excelData;
+    private DataRepository _repository;
+    private ExcelValidator _excelValidator;
+    private const int maxAllowedSize = 50 * 1024 * 1024; //50 MB
+    private string HoverClass = string.Empty;
+    private ElementReference fileDropContainer;
+    InputFile? inputFile;
+    private bool IsProcessingFile = false;
+    IJSObjectReference? _filePasteModule;
+    IJSObjectReference? _filePasteFunctionReference;
+    private IConfiguration configuration;
+    private FtpManager _ftpManager;
+    public FileUpload()
+    {
+
+    }
+    protected override void OnInitialized()
+    {
+        configuration = Configuration;
+        _repository = new DataRepository(configuration["DW2-ProvMicroDesa"]);
+        _excelValidator = new ExcelValidator(_repository);
+        _ftpManager = new FtpManager(
+    Configuration["FTPCRM-PublicServer"],
+    Configuration["FTPCRM-Username"],
+    Configuration["FTPCRM-Password"]
+    );
+    }
+    void OnDragEnter(DragEventArgs e) => HoverClass = "hover";
+    void OnDragLeave(DragEventArgs e) => HoverClass = string.Empty;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _filePasteModule = await JSRuntime
+                .InvokeAsync<IJSObjectReference>("import", "./js/filePaste.js");
+
+            _filePasteFunctionReference = await _filePasteModule
+                .InvokeAsync<IJSObjectReference>("initializeFilePaste", fileDropContainer, inputFile!.Element);
+            await _filePasteModule!.DisposeAsync();
+        }
+    }
+
+    async Task OnChange(InputFileChangeEventArgs e)
+    {
+        clicked = false;
+        IsProcessingFile = true;
+        excelData = null;
+        foreach (var file in e.GetMultipleFiles())
+        {
+            using var stream = file.OpenReadStream(maxAllowedSize);
+            using (var ms = new MemoryStream())
+            {
+                await stream.CopyToAsync(ms);
+                using (var workbook = new XLWorkbook(ms))
+                {
+                    var validationResult = _excelValidator.ValidateExcel(workbook);
+                    excelData = validationResult.validatedRows;
+                    errorCount = validationResult.errors;
+                    if (errorCount > 0)
+                    {
+                        Console.WriteLine("Validation failed");
+                    }
+                    // Update UI or perform further actions if needed
+                    StateHasChanged(); // Ensure UI refreshes after updating data
+                }
+            }
+        }
+
+        IsProcessingFile = false;
+    }
+
+    public async Task UploadToFTP()
+    {
+        if (errorCount == 0)
+        {
+            clicked = true;
+            // Convert Excel data to CSV format with semicolon delimiter
+            byte[] csvBytes = ConvertToCsv(excelData);
+
+            // Upload CSV data to FTP server
+            string ftpDirectory = "xxxxx"; // Adjust as needed
+            string remoteFileName = "testSantiago.txt"; // Adjust the filename as needed
+            await _ftpManager.UploadDataAsync(csvBytes, remoteFileName, ftpDirectory);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_filePasteFunctionReference is not null)
+        {
+            await _filePasteFunctionReference.InvokeVoidAsync("dispose");
+            await _filePasteFunctionReference.DisposeAsync();
+        }
+
+        if (_filePasteModule is not null)
+        {
+            await _filePasteModule.DisposeAsync();
+        }
+    }
+
+    private byte[] ConvertToCsv(List<ExcelRow> excelData)
+    {
+        ExcelToCsvConverter excelToCsvConverter = new ExcelToCsvConverter();
+        return excelToCsvConverter.ConvertToCsv(excelData);
+    }
+}

@@ -55,9 +55,9 @@ public class ExcelValidator
             foreach (var excelRow in clientGroup)
             {
                 excelRow.HasError = true;
-                if(excelRow.ErrorMessage == null)
+                if (excelRow.ErrorMessage == null)
                 {
-                    excelRow.ErrorMessage = "Error with one row of the client.";
+                    excelRow.ErrorMessage = "Error con una fila del cliente";
                 }
             }
             return false;
@@ -66,16 +66,26 @@ public class ExcelValidator
         var databaseRows = _repository.RetrieveClientDatabaseRows(dniCliente);
         Console.WriteLine($"Retrieved {databaseRows.Count} database rows for Client: {dniCliente}");
 
-        // Merge Excel rows with database rows
-        if (!MergeRows(clientGroup.ToList(), databaseRows))
+        // Identify database rows missing in Excel
+        var missingInExcel = databaseRows.Where(dbRow => !clientGroup.Any(excelRow => excelRow.Solicitud == dbRow.Solicitud));
+        if (missingInExcel.Any())
         {
-            // Error: Database row not found for Excel row
             foreach (var excelRow in clientGroup)
             {
                 excelRow.HasError = true;
-                excelRow.ErrorMessage = "Database row not found for Excel row.";
+                if (excelRow.ErrorMessage == null)
+                {
+                    excelRow.ErrorMessage = "Faltan filas del cliente";
+                }
             }
-            return false;
+        }
+
+        // Identify Excel rows missing in database
+        var missingInDatabase = clientGroup.Where(excelRow => !databaseRows.Any(dbRow => excelRow.Solicitud == dbRow.Solicitud));
+        foreach (var missingRow in missingInDatabase)
+        {
+            missingRow.HasError = true;
+            missingRow.ErrorMessage = "Fila de Excel no encontrada en la base de datos";
         }
 
         // Check if each client has a single executive
@@ -85,37 +95,38 @@ public class ExcelValidator
             foreach (var excelRow in clientGroup)
             {
                 excelRow.HasError = true;
-                excelRow.ErrorMessage = "El cliente tiene múltiples ejecutivos asociados después de la modificación.";
+                excelRow.ErrorMessage = "El cliente tiene múltiples ejecutivos asociados después de la modificación";
             }
         }
 
         return true;
     }
-    private bool MergeRows(List<ExcelRow> excelRows, List<DatabaseRow> databaseRows)
-    {
-        foreach (var excelRow in excelRows)
-        {
-            var matchingDatabaseRows = databaseRows.Where(row => row.Solicitud == excelRow.Solicitud && row.DNICliente == excelRow.DNICliente).ToList();
 
-            if (matchingDatabaseRows.Count == 0)
-            {
-                // This indicates an error, as there should be a corresponding database row for each Excel row
-                Console.WriteLine($"No matching database row found for Excel row: {excelRow.Solicitud}, {excelRow.DNICliente}");
-                return false;
-            }
+    //    private bool MergeRows(List<ExcelRow> excelRows, List<DatabaseRow> databaseRows)
+    //{
+    //    foreach (var excelRow in excelRows)
+    //    {
+    //        var matchingDatabaseRows = databaseRows.Where(row => row.Solicitud == excelRow.Solicitud && row.DNICliente == excelRow.DNICliente).ToList();
 
-            // Update properties of database rows with Excel data
-            foreach (var databaseRow in matchingDatabaseRows)
-            {
-                databaseRow.Solicitud = excelRow.Solicitud;
-                databaseRow.DNICliente = excelRow.DNICliente;
-                databaseRow.NombreEjecutivoAdmin = excelRow.NombreEjecutivoAdmin;
-                databaseRow.DNIEjecutivoAdmin = excelRow.DNIEjecutivoAdmin;
-            }
-        }
+    //        if (matchingDatabaseRows.Count == 0)
+    //        {
+    //            // This indicates an error, as there should be a corresponding database row for each Excel row
+    //            Console.WriteLine($"No matching database row found for Excel row: {excelRow.Solicitud}, {excelRow.DNICliente}");
+    //            return false;
+    //        }
 
-        return true;
-    }
+    //        // Update properties of database rows with Excel data
+    //        foreach (var databaseRow in matchingDatabaseRows)
+    //        {
+    //            databaseRow.Solicitud = excelRow.Solicitud;
+    //            databaseRow.DNICliente = excelRow.DNICliente;
+    //            databaseRow.NombreEjecutivoAdmin = excelRow.NombreEjecutivoAdmin;
+    //            databaseRow.DNIEjecutivoAdmin = excelRow.DNIEjecutivoAdmin;
+    //        }
+    //    }
+
+    //    return true;
+    //}
 
     private bool CheckSingleExecutive(IEnumerable<ExcelRow> excelRows)
     {

@@ -24,7 +24,7 @@ public class DataRepository
             bool opportunityExists = CheckCreditExists(connection, excelRow.DNICliente, excelRow.Solicitud);
             if (!opportunityExists)
             {
-                return (false, "Credit no encontrado");
+                return (false, "Crédito no encontrado");
             }
 
             bool executiveExists = ExecutiveExists(connection,excelRow.DNIEjecutivoAdmin, excelRow.NombreEjecutivoAdmin);
@@ -72,14 +72,10 @@ public List<DatabaseRow> RetrieveClientDatabaseRows(string dniCliente)
 
 private bool CheckCreditExists(SqlConnection connection, string dniCliente, string solicitud)
 {
-        string tipCta = "330";
-        string sitCont = "Vigente";
-        using (var command = new SqlCommand("SELECT COUNT(*) FROM CRM.pnet_creditBase CR INNER JOIN CRM.ContactBase C ON CR.pnet_ContactId = C.ContactId INNER JOIN vw_StatusClientes S ON S.NIF=CR.PNET_NIF  WHERE C.pnet_DocumentNumber = @DNICliente AND CR.pnet_OpportunityNumber = @Solicitud AND S.[TIP CTA]=@TipCta AND S.[SIT CONT]=@SitCont", connection))
+        using (var command = new SqlCommand("SELECT COUNT(*) FROM CRM.pnet_creditBase CR INNER JOIN CRM.ContactBase C ON CR.pnet_ContactId = C.ContactId WHERE C.pnet_DocumentNumber = @DNICliente AND CR.pnet_OpportunityNumber = @Solicitud", connection))
     {
             command.Parameters.AddWithValue("@DNICliente", dniCliente);
             command.Parameters.AddWithValue("@Solicitud", solicitud);
-            command.Parameters.AddWithValue("@TipCta", tipCta);
-            command.Parameters.AddWithValue("@SitCont", sitCont);
             return (int)command.ExecuteScalar() > 0;
     }
 }

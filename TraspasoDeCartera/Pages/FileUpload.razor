@@ -2,6 +2,7 @@
 @using Microsoft.Extensions.Configuration
 @inject IJSRuntime JSRuntime;
 @inject IConfiguration Configuration
+@inject HttpContext httpContext
 @implements IAsyncDisposable
 @using ClosedXML.Excel
 @using System.IO
@@ -9,7 +10,9 @@
 @using System.Net.Http;
 @using System.Net.Http.Headers;
 @using System.Text;
+@using System.Security.Claims;
 @using TraspasoDeCartera.Data
+@using TraspasoDeCartera.DataAccess;
 @using TraspasoDeCartera.Services;
 @using TraspasoDeCartera.Utils;
 
@@ -204,14 +207,30 @@
             clicked = true;
             // Convert Excel data to CSV format with semicolon delimiter
             byte[] csvBytes = ConvertToCsv(excelData);
-
+            string csvContent = Encoding.UTF8.GetString(csvBytes);
             // Format the date part
             string currentDate = DateTime.Now.ToString("yyyyMMdd");
 
             // Upload CSV data to FTP server
             string ftpDirectory = "xxxxx"; // Adjust as needed
             string remoteFileName = $"PROME_UPDATE_CREDITS_{currentDate}.txt"; // Adjust the filename as needed
-            await _ftpManager.UploadDataAsync(csvBytes, remoteFileName, ftpDirectory);
+                                                                               // await _ftpManager.UploadDataAsync(csvBytes, remoteFileName, ftpDirectory);
+            string userEmail;
+            if (httpContext.User.Identity.IsAuthenticated)
+            {
+                var emailClaim = httpContext.User.FindFirstValue(ClaimTypes.Email);
+                userEmail = emailClaim;
+                var traspasoDeCartera_Historial = new TraspasoDeCartera_Historial
+                    {
+                        Email = userEmail, // Adjust with appropriate email
+                        CsvFile = csvContent,
+                        DateUpdated = DateTime.Now
+                    };
+
+                // Insert data into database
+                _repository.InsertData(traspasoDeCartera_Historial);
+            }
+
         }
     }
 

@@ -1,5 +1,4 @@
-﻿using OfficeOpenXml;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using TraspasoDeCartera.Data;
@@ -27,7 +26,7 @@ public class DataRepository
                 return (false, "Crédito no encontrado");
             }
 
-            bool executiveExists = ExecutiveExists(connection,excelRow.DNIEjecutivoAdmin, excelRow.NombreEjecutivoAdmin);
+            bool executiveExists = ExecutiveExists(connection, excelRow.DNIEjecutivoAdmin, excelRow.NombreEjecutivoAdmin);
 
             if (!executiveExists)
             {
@@ -35,52 +34,52 @@ public class DataRepository
             }
             return (true, null);
 
-    }
-}
-
-
-public List<DatabaseRow> RetrieveClientDatabaseRows(string dniCliente)
-{
-    var databaseRows = new List<DatabaseRow>();
-
-    using (var connection = new SqlConnection(_connectionString))
-    {
-        connection.Open();
-        using (var command = new SqlCommand("SELECT CR.pnet_OpportunityNumber, C.pnet_DocumentNumber, S.pnet_ExcecutiveID, S.FullName FROM CRM.pnet_CreditBase CR INNER JOIN CRM.ContactBase C ON CR.pnet_ContactId = C.ContactId INNER JOIN CRM.SystemUserBase S ON CR.pnet_CommercialExecutiveAdminId = S.SystemUserId WHERE C.pnet_DocumentNumber = @DNICliente", connection))
-        {
-            command.Parameters.AddWithValue("@DNICliente", dniCliente);
-
-            using (var reader = command.ExecuteReader())
-            {
-                while (reader.Read())
-                {
-                    var databaseRow = new DatabaseRow
-                    {
-                        Solicitud = reader["pnet_OpportunityNumber"].ToString(),
-                        DNICliente = reader["pnet_DocumentNumber"].ToString(),
-                        DNIEjecutivoAdmin = reader["pnet_ExcecutiveID"].ToString(),
-                        NombreEjecutivoAdmin = reader["FullName"].ToString()
-                    };
-                    databaseRows.Add(databaseRow);
-                }
-            }
         }
     }
 
-    return databaseRows;
-}
 
-private bool CheckCreditExists(SqlConnection connection, string dniCliente, string solicitud)
-{
-        using (var command = new SqlCommand("SELECT COUNT(*) FROM CRM.pnet_creditBase CR INNER JOIN CRM.ContactBase C ON CR.pnet_ContactId = C.ContactId WHERE C.pnet_DocumentNumber = @DNICliente AND CR.pnet_OpportunityNumber = @Solicitud", connection))
+    public List<DatabaseRow> RetrieveClientDatabaseRows(string dniCliente)
     {
+        var databaseRows = new List<DatabaseRow>();
+
+        using (var connection = new SqlConnection(_connectionString))
+        {
+            connection.Open();
+            using (var command = new SqlCommand("SELECT CR.pnet_OpportunityNumber, C.pnet_DocumentNumber, S.pnet_ExcecutiveID, S.FullName FROM CRM.pnet_CreditBase CR INNER JOIN CRM.ContactBase C ON CR.pnet_ContactId = C.ContactId INNER JOIN CRM.SystemUserBase S ON CR.pnet_CommercialExecutiveAdminId = S.SystemUserId WHERE C.pnet_DocumentNumber = @DNICliente", connection))
+            {
+                command.Parameters.AddWithValue("@DNICliente", dniCliente);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var databaseRow = new DatabaseRow
+                        {
+                            Solicitud = reader["pnet_OpportunityNumber"].ToString(),
+                            DNICliente = reader["pnet_DocumentNumber"].ToString(),
+                            DNIEjecutivoAdmin = reader["pnet_ExcecutiveID"].ToString(),
+                            NombreEjecutivoAdmin = reader["FullName"].ToString()
+                        };
+                        databaseRows.Add(databaseRow);
+                    }
+                }
+            }
+        }
+
+        return databaseRows;
+    }
+
+    private bool CheckCreditExists(SqlConnection connection, string dniCliente, string solicitud)
+    {
+        using (var command = new SqlCommand("SELECT COUNT(*) FROM CRM.pnet_creditBase CR INNER JOIN CRM.ContactBase C ON CR.pnet_ContactId = C.ContactId WHERE C.pnet_DocumentNumber = @DNICliente AND CR.pnet_OpportunityNumber = @Solicitud", connection))
+        {
             command.Parameters.AddWithValue("@DNICliente", dniCliente);
             command.Parameters.AddWithValue("@Solicitud", solicitud);
             return (int)command.ExecuteScalar() > 0;
+        }
     }
-}
-public bool ExecutiveExists(SqlConnection connection,string executiveId, string executiveName)
-{
+    public bool ExecutiveExists(SqlConnection connection, string executiveId, string executiveName)
+    {
         using (var command = new SqlCommand("SELECT COUNT(*) FROM CRM.SystemUserBase WHERE pnet_ExcecutiveID = @ExecutiveId AND FullName=@ExecutiveName AND IsDisabled=0", connection))
         {
             command.Parameters.AddWithValue("@ExecutiveId", executiveId);
@@ -90,5 +89,21 @@ public bool ExecutiveExists(SqlConnection connection,string executiveId, string 
             return count > 0;
         }
     }
-}
+    public void InsertData(TraspasoDeCartera_Historial traspasoDeCartera_Historial)
+    {
+        using (var connection = new SqlConnection(_connectionString))
+        {
+            connection.Open();
+            using (var command = new SqlCommand(
+                @"INSERT INTO TraspasoDeCartera_Historial (Email, CsvFile, DateUpdated)
+                  VALUES (@Email, @CsvFile, @DateUpdated)", connection))
+            {
+                command.Parameters.AddWithValue("@Email", traspasoDeCartera_Historial.Email);
+                command.Parameters.AddWithValue("@CsvFile", traspasoDeCartera_Historial.CsvFile);
+                command.Parameters.AddWithValue("@DateUpdated", traspasoDeCartera_Historial.DateUpdated);
+                command.ExecuteNonQuery();
+            }
+        }
+    }
 
+}

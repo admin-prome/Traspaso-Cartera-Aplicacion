@@ -27,6 +27,12 @@
 
     @if (excelData != null)
     {
+        @if (excelData.All(row => !row.HasError))
+        {
+            <div class="alert alert-success" role="alert">
+                Todos los registros se han validado correctamente.
+            </div>
+        }
         <div class="row mt-4">
             <div class="col">
                 <h4 class="mb-3">Validaciones Realizadas:</h4>
@@ -41,12 +47,21 @@
                                 <th>DNIEjecutivoAdmin</th>
                                 <th>Estado</th>
                                 <th>Error</th>
+                                <th>
+                                    Ver Todas las Filas
+                                    <button @onclick="ToggleVisibility" class="btn btn-link p-0 ml-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-down" viewBox="0 0 16 16">
+                                            <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 1 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
+                                        </svg>
+                                    </button>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
+                            <!-- Render rows with errors -->
                             @foreach (var row in excelData)
                             {
-                                <tr>
+                                <tr style="@(row.HasError || showValidatedRows ? "" : "display: none;")">
                                     <td style="font-size: smaller;">@row.Solicitud</td>
                                     <td style="font-size: smaller;">@row.DNICliente</td>
                                     <td style="font-size: smaller;">@row.Aceptado</td>
@@ -120,6 +135,8 @@
     IJSObjectReference? _filePasteFunctionReference;
     private IConfiguration configuration;
     private FtpManager _ftpManager;
+    private bool showValidatedRows = false;
+
     public FileUpload()
     {
 
@@ -188,12 +205,16 @@
             // Convert Excel data to CSV format with semicolon delimiter
             byte[] csvBytes = ConvertToCsv(excelData);
 
+            // Format the date part
+            string currentDate = DateTime.Now.ToString("yyyyMMdd");
+
             // Upload CSV data to FTP server
             string ftpDirectory = "xxxxx"; // Adjust as needed
-            string remoteFileName = "testSantiago.txt"; // Adjust the filename as needed
+            string remoteFileName = $"PROME_UPDATE_CREDITS_{currentDate}.txt"; // Adjust the filename as needed
             await _ftpManager.UploadDataAsync(csvBytes, remoteFileName, ftpDirectory);
         }
     }
+
 
     public async ValueTask DisposeAsync()
     {
@@ -214,4 +235,12 @@
         ExcelToCsvConverter excelToCsvConverter = new ExcelToCsvConverter();
         return excelToCsvConverter.ConvertToCsv(excelData);
     }
+
+    // Toggle the visibility of rows with zero errors
+    private void ToggleVisibility()
+    {
+        showValidatedRows = !showValidatedRows;
+        StateHasChanged();
+    }
+
 }

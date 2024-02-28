@@ -214,22 +214,22 @@
             // Upload CSV data to FTP server
             string ftpDirectory = "xxxxx"; // Adjust as needed
             string remoteFileName = $"PROME_UPDATE_CREDITS_{currentDate}.txt"; // Adjust the filename as needed
-                                                                               // await _ftpManager.UploadDataAsync(csvBytes, remoteFileName, ftpDirectory);
-            string userEmail;
-            if (httpContext.User.Identity.IsAuthenticated)
-            {
-                var emailClaim = httpContext.User.FindFirstValue(ClaimTypes.Email);
-                userEmail = emailClaim;
-                var traspasoDeCartera_Historial = new TraspasoDeCartera_Historial
-                    {
-                        Email = userEmail, // Adjust with appropriate email
-                        CsvFile = csvContent,
-                        DateUpdated = DateTime.Now
-                    };
+            await _ftpManager.UploadDataAsync(csvBytes, remoteFileName, ftpDirectory);
+            // string userEmail;
+            // if (httpContext.User.Identity.IsAuthenticated)
+            // {
+            //     var emailClaim = httpContext.User.FindFirstValue(ClaimTypes.Email);
+            //     userEmail = emailClaim;
+            //     var traspasoDeCartera_Historial = new TraspasoDeCartera_Historial
+            //         {
+            //             Email = userEmail, // Adjust with appropriate email
+            //             CsvFile = csvContent,
+            //             DateUpdated = DateTime.Now
+            //         };
 
-                // Insert data into database
-                _repository.InsertData(traspasoDeCartera_Historial);
-            }
+            //     // Insert data into database
+            //     _repository.InsertData(traspasoDeCartera_Historial);
+            // }
 
         }
     }

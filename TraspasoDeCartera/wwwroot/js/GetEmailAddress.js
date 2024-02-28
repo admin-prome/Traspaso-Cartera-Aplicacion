@@ -14,10 +14,10 @@
             const userData = await response.json();
 
             // Extract the email address
-            const emailClaim = userData.find(claim => claim.typ === "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
+            const emailClaim = userData.filter(claim => claim.typ === "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
 
-            if (emailClaim) {
-                return emailClaim.val;
+            if (emailClaim.length > 0) {
+                return emailClaim[0].val;
             } else {
                 console.error("Email address claim not found in response.");
                 return null;

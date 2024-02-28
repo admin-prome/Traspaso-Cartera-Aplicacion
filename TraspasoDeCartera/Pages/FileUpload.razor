@@ -10,6 +10,7 @@
 @using System.Net.Http.Headers;
 @using System.Text;
 @using System.Security.Claims;
+@using System.Text.Json;
 @using TraspasoDeCartera.Data
 @using TraspasoDeCartera.DataAccess;
 @using TraspasoDeCartera.Services;
@@ -273,11 +274,18 @@
             // Check if the request was successful
             if (response.IsSuccessStatusCode)
             {
-                // Parse the response JSON
-                var userInfo = await response.Content.ReadFromJsonAsync<Claim[]>();
+                // Read the response content as a string
+                var responseContent = await response.Content.ReadAsStringAsync();
 
-                // Find the email claim
-                var emailClaim = userInfo?.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+                // Parse the JSON response
+                var userClaims = JsonDocument.Parse(responseContent).RootElement;
+
+                // Find the email address claim
+                var emailClaim = userClaims
+                    .GetProperty("user_claims")
+                    .EnumerateArray()
+                    .FirstOrDefault(c => c.GetProperty("typ").GetString() == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")
+                    .GetProperty("val").GetString();
 
                 // Set the userEmail
                 userEmail = emailClaim ?? "Unknown";

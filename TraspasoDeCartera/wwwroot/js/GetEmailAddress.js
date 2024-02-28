@@ -10,11 +10,11 @@
         });
         if (response.ok) {
             // Parse the JSON response
-            const userData = await response.json();
+            const userData = await response.json()[0];
             const userClaims = userData.user_claims; // Assuming user_claims is the array containing claims
-            const emailClaim = userClaims.filter(claim => claim.typ === "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
-            if (emailClaim.length > 0) {
-                return emailClaim[0].val;
+            const emailClaim = userClaims.find(claim => claim.typ === "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
+            if (emailClaim) {
+                return emailClaim.val;
             } else {
                 console.error("Email address claim not found in response.");
                 return null;

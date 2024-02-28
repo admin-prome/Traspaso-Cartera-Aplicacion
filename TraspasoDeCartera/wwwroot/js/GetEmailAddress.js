@@ -10,8 +10,8 @@
         });
         if (response.ok) {
             // Parse the JSON response
-            const userData = await response.json()[0];
-            const userClaims = userData.user_claims; // Assuming user_claims is the array containing claims
+            const userData = await response.json();
+            const userClaims = userData[0].user_claims; // Assuming user_claims is the array containing claims
             const emailClaim = userClaims.find(claim => claim.typ === "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
             if (emailClaim) {
                 return emailClaim.val;

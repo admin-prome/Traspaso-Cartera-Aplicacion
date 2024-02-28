@@ -1,4 +1,5 @@
 ﻿using ClosedXML.Excel;
+using System.Globalization;
 using TraspasoDeCartera.Data;
 using TraspasoDeCartera.DataAccess;
 public class ExcelValidator
@@ -154,8 +155,7 @@ public class ExcelValidator
                 isFirstRow = false;
                 continue; // Skip processing headers
             }
-
-            string solicitud = row.Cell(solicitudIndex).Value.ToString();
+            string solicitud = row.Cell(solicitudIndex).Value.ToString(CultureInfo.InvariantCulture);
             string dniCliente = row.Cell(dniClienteIndex).Value.ToString();
             string aceptado = row.Cell(aceptadoIndex).Value.ToString();
             string nombreEjecutivoAdmin = row.Cell(nombreEjecutivoAdminIndex).Value.ToString();

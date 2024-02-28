@@ -12,7 +12,7 @@
         if (response.ok) {
             // Parse the JSON response
             const userData = await response.json();
-
+            console.log(userData);
             // Extract the email address
             const emailClaim = userData.filter(claim => claim.typ === "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
 

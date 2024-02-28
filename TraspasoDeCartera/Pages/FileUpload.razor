@@ -267,41 +267,19 @@
     {
         try
         {
-            // Make an HTTP GET request to the /.auth/me endpoint
-            var response = await httpClient.GetAsync("https://traspaso-cartera.azurewebsites.net/.auth/me");
-            await JSRuntime.InvokeVoidAsync("console.log", $"Error: {response}");
-
-            // Check if the request was successful
-            if (response.IsSuccessStatusCode)
+            var module = await JSRuntime
+                .InvokeAsync<IJSObjectReference>("import", "./js/GetEmailAddress.js");
+            // Call the JavaScript function to fetch the email address
+            userEmail = await module.InvokeAsync<string>("getEmailAdress");
+            if (string.IsNullOrEmpty(userEmail))
             {
-                // Read the response content as a string
-                var responseContent = await response.Content.ReadAsStringAsync();
-
-                // Parse the JSON response
-                var userClaims = JsonDocument.Parse(responseContent).RootElement;
-
-                // Find the email address claim
-                var emailClaim = userClaims
-                    .GetProperty("user_claims")
-                    .EnumerateArray()
-                    .FirstOrDefault(c => c.GetProperty("typ").GetString() == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")
-                    .GetProperty("val").GetString();
-
-                // Set the userEmail
-                userEmail = emailClaim ?? "Unknown";
-            }
-            else
-            {
-                // Handle unsuccessful response
                 userEmail = "Unknown";
             }
         }
         catch (Exception ex)
         {
-            // Handle exceptions
             Console.WriteLine($"Error: {ex.Message}");
             userEmail = "Unknown";
-            await JSRuntime.InvokeVoidAsync("console.error", $"Error: {ex.Message}");
         }
     }
 }

@@ -151,8 +151,7 @@
         configuration = Configuration;
         _repository = new DataRepository(configuration["DW2-ProvMicroDesa"]);
         _excelValidator = new ExcelValidator(_repository);
-        _ftpManager = new FtpManager(
-    Configuration["FTPCRM-PublicServer"],
+        _ftpManager = new FtpManager(Configuration["FTPCRM-PublicServer"],
     Configuration["FTPCRM-Username"],
     Configuration["FTPCRM-Password"]
     );
@@ -212,11 +211,14 @@
             string csvContent = Encoding.UTF8.GetString(csvBytes);
             // Format the date part
             string currentDate = DateTime.Now.ToString("yyyyMMdd");
-            await GetUserEmailAsync();
+            if (userEmail == null)
+            {
+                await GetUserEmailAsync();
+            }
             // Upload CSV data to FTP server
             string ftpDirectory = "xxxxx"; // Adjust as needed
             string remoteFileName = $"PROME_UPDATE_CREDITS_{currentDate}.txt"; // Adjust the filename as needed
-            //await _ftpManager.UploadDataAsync(csvBytes, remoteFileName, ftpDirectory);
+                                                                               //await _ftpManager.UploadDataAsync(csvBytes, remoteFileName, ftpDirectory);
             var traspasoDeCartera_Historial = new TraspasoDeCartera_Historial
                 {
                     Email = userEmail, // Adjust with appropriate email
@@ -257,11 +259,6 @@
         showValidatedRows = !showValidatedRows;
         StateHasChanged();
     }
-
-    // protected override async Task OnInitializedAsync()
-    // {
-    //     await GetUserEmailAsync();
-    // }
 
     private async Task GetUserEmailAsync()
     {

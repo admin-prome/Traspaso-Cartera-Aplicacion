@@ -5,13 +5,12 @@
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
-                // Add any additional headers as needed
             },
         });
         if (response.ok) {
             // Parse the JSON response
             const userData = await response.json();
-            const userClaims = userData[0].user_claims; // Assuming user_claims is the array containing claims
+            const userClaims = userData[0].user_claims;
             const emailClaim = userClaims.find(claim => claim.typ === "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
             if (emailClaim) {
                 return emailClaim.val;

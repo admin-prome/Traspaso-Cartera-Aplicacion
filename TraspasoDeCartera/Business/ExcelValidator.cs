@@ -155,7 +155,7 @@ public class ExcelValidator
                 isFirstRow = false;
                 continue; // Skip processing headers
             }
-            string solicitud = row.Cell(solicitudIndex).Value.ToString(CultureInfo.InvariantCulture);
+            string solicitud = row.Cell(solicitudIndex).Value.ToString(new CultureInfo("es-ES"));
             string dniCliente = row.Cell(dniClienteIndex).Value.ToString();
             string aceptado = row.Cell(aceptadoIndex).Value.ToString();
             string nombreEjecutivoAdmin = row.Cell(nombreEjecutivoAdminIndex).Value.ToString();

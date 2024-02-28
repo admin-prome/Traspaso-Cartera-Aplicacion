@@ -15,7 +15,7 @@
             console.log(userData);
             // Extract the email address
             const emailClaim = userData.filter(claim => claim.typ === "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
-
+            console.log(emailClaim);
             if (emailClaim.length > 0) {
                 return emailClaim[0].val;
             } else {

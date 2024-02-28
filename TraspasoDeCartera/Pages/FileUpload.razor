@@ -119,6 +119,8 @@
 </div>
 
 @code {
+    private HttpClient httpClient = new HttpClient(new HttpClientHandler() { UseDefaultCredentials = true });
+    private string userEmail;
     private string downloadLink;
     private string textContent;
     private string textContentFileName;
@@ -214,21 +216,15 @@
             string ftpDirectory = "xxxxx"; // Adjust as needed
             string remoteFileName = $"PROME_UPDATE_CREDITS_{currentDate}.txt"; // Adjust the filename as needed
             await _ftpManager.UploadDataAsync(csvBytes, remoteFileName, ftpDirectory);
-            // string userEmail;
-            // if (httpContext.User.Identity.IsAuthenticated)
-            // {
-            //     var emailClaim = httpContext.User.FindFirstValue(ClaimTypes.Email);
-            //     userEmail = emailClaim;
-            //     var traspasoDeCartera_Historial = new TraspasoDeCartera_Historial
-            //         {
-            //             Email = userEmail, // Adjust with appropriate email
-            //             CsvFile = csvContent,
-            //             DateUpdated = DateTime.Now
-            //         };
+            var traspasoDeCartera_Historial = new TraspasoDeCartera_Historial
+                {
+                    Email = userEmail, // Adjust with appropriate email
+                    CsvFile = csvContent,
+                    DateUpdated = DateTime.Now
+                };
 
-            //     // Insert data into database
-            //     _repository.InsertData(traspasoDeCartera_Historial);
-            // }
+            // Insert data into database
+            _repository.InsertData(traspasoDeCartera_Historial);
 
         }
     }
@@ -261,4 +257,42 @@
         StateHasChanged();
     }
 
+    protected override async Task OnInitializedAsync()
+    {
+        await GetUserEmailAsync();
+    }
+
+    private async Task GetUserEmailAsync()
+    {
+        try
+        {
+            // Make an HTTP GET request to the /.auth/me endpoint
+            var response = await httpClient.GetAsync("https://traspaso-cartera.azurewebsites.net/.auth/me");
+
+
+            // Check if the request was successful
+            if (response.IsSuccessStatusCode)
+            {
+                // Parse the response JSON
+                var userInfo = await response.Content.ReadFromJsonAsync<Claim[]>();
+
+                // Find the email claim
+                var emailClaim = userInfo?.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+
+                // Set the userEmail
+                userEmail = emailClaim ?? "Unknown";
+            }
+            else
+            {
+                // Handle unsuccessful response
+                userEmail = "Unknown";
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions
+            Console.WriteLine($"Error: {ex.Message}");
+            userEmail = "Unknown";
+        }
+    }
 }

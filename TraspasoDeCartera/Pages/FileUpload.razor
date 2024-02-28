@@ -217,11 +217,11 @@
             }
             // Upload CSV data to FTP server
             string ftpDirectory = "xxxxx"; // Adjust as needed
-            string remoteFileName = $"PROME_UPDATE_CREDITS_{currentDate}.txt"; // Adjust the filename as needed
+            string remoteFileName = $"PROME_UPDATE_CREDITS_{currentDate}.txt"; 
                                                                                //await _ftpManager.UploadDataAsync(csvBytes, remoteFileName, ftpDirectory);
             var traspasoDeCartera_Historial = new TraspasoDeCartera_Historial
                 {
-                    Email = userEmail, // Adjust with appropriate email
+                    Email = userEmail,
                     CsvFile = csvContent,
                     DateUpdated = DateTime.Now
                 };

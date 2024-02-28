@@ -212,7 +212,7 @@
             string csvContent = Encoding.UTF8.GetString(csvBytes);
             // Format the date part
             string currentDate = DateTime.Now.ToString("yyyyMMdd");
-
+            await GetUserEmailAsync();
             // Upload CSV data to FTP server
             string ftpDirectory = "xxxxx"; // Adjust as needed
             string remoteFileName = $"PROME_UPDATE_CREDITS_{currentDate}.txt"; // Adjust the filename as needed
@@ -258,10 +258,10 @@
         StateHasChanged();
     }
 
-    protected override async Task OnInitializedAsync()
-    {
-        await GetUserEmailAsync();
-    }
+    // protected override async Task OnInitializedAsync()
+    // {
+    //     await GetUserEmailAsync();
+    // }
 
     private async Task GetUserEmailAsync()
     {
@@ -269,7 +269,7 @@
         {
             // Make an HTTP GET request to the /.auth/me endpoint
             var response = await httpClient.GetAsync("https://traspaso-cartera.azurewebsites.net/.auth/me");
-
+            await JSRuntime.InvokeVoidAsync("console.log", $"Error: {response}");
 
             // Check if the request was successful
             if (response.IsSuccessStatusCode)
@@ -301,6 +301,7 @@
             // Handle exceptions
             Console.WriteLine($"Error: {ex.Message}");
             userEmail = "Unknown";
+            await JSRuntime.InvokeVoidAsync("console.error", $"Error: {ex.Message}");
         }
     }
 }

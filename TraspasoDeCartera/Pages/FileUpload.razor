@@ -118,25 +118,6 @@
         </div>
     }
 </div>
-<div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="successModalLabel">Upload Successful</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                Your file has been successfully uploaded.
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 
 @code {
     private HttpClient httpClient = new HttpClient(new HttpClientHandler() { UseDefaultCredentials = true });
@@ -160,7 +141,6 @@
     private IConfiguration configuration;
     private FtpManager _ftpManager;
     private bool showValidatedRows = false;
-
     public FileUpload()
     {
 
@@ -228,7 +208,6 @@
             // Convert Excel data to CSV format with semicolon delimiter
             byte[] csvBytes = ConvertToCsv(excelData);
             string csvContent = Encoding.UTF8.GetString(csvBytes);
-            // Format the date part
             string currentDate = DateTime.Now.ToString("yyyyMMdd");
             if (userEmail == null)
             {
@@ -237,17 +216,16 @@
             // Upload CSV data to FTP server
             string ftpDirectory = "xxxxx"; // Adjust as needed
             string remoteFileName = $"PROME_UPDATE_CREDITS_{currentDate}.txt"; 
-                                                                               //await _ftpManager.UploadDataAsync(csvBytes, remoteFileName, ftpDirectory);
+            //await _ftpManager.UploadDataAsync(csvBytes, remoteFileName, ftpDirectory);
             var traspasoDeCartera_Historial = new TraspasoDeCartera_Historial
                 {
                     Email = userEmail,
                     CsvFile = csvContent,
                     DateUpdated = DateTime.Now
                 };
-
+            await ShowSweetAlert();
             // Insert data into database
             _repository.InsertData(traspasoDeCartera_Historial);
-
         }
     }
 
@@ -299,8 +277,13 @@
         }
     }
 
-    private void ShowSuccessModal()
+    async Task ShowSweetAlert()
     {
-        JSRuntime.InvokeVoidAsync("$('#successModal').modal('show')");
+        await JSRuntime.InvokeAsync<object>("Swal.fire",
+            "Correcto!",
+            "El archivo se subió correctamente. En unos minutos, ya podrás ver los traspasos realizados.",
+            "success",
+            new { confirmButtonText = "Close" }
+        );
     }
 }

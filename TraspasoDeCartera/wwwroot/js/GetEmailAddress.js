@@ -8,14 +8,11 @@
                 // Add any additional headers as needed
             },
         });
-        console.log(response);
         if (response.ok) {
             // Parse the JSON response
             const userData = await response.json();
-            console.log(userData);
-            // Extract the email address
-            const emailClaim = userData.filter(claim => claim.typ === "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
-            console.log(emailClaim);
+            const userClaims = userData.user_claims; // Assuming user_claims is the array containing claims
+            const emailClaim = userClaims.filter(claim => claim.typ === "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
             if (emailClaim.length > 0) {
                 return emailClaim[0].val;
             } else {

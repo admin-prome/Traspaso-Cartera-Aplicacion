@@ -32,6 +32,14 @@ public class DataRepository
             {
                 return (false, "Ejecutivo no encontrado.");
             }
+
+
+            bool creditVigency = CheckCreditVigency(excelRow.Solicitud);
+
+            if (!creditVigency)
+            {
+                return (false, "El crédito no está vigente.");
+            }
             return (true, null);
 
         }
@@ -106,4 +114,28 @@ public class DataRepository
         }
     }
 
+    public bool CheckCreditVigency(string solicitud)
+    {
+        string TIP_CTA = "330";
+        string SIT_CONT = "VIGENTE";
+        using (var connection = new SqlConnection(_connectionString))
+        {
+            connection.Open();
+            using (var command = new SqlCommand("SELECT TOP(1) P.COLUMN21 FROM FTP_PADRONSUR P, CRM.pnet_CreditBase C WHERE P.COLUMN20 LIKE '%'+C.pnet_nif AND C.pnet_OpportunityNumber=@Solicitud AND P.COLUMN19 LIKE '%'+@TIP_CTA+'%'",connection))
+            {
+                command.Parameters.AddWithValue("@Solicitud", solicitud);
+                command.Parameters.AddWithValue("@TIP_CTA", TIP_CTA);
+                command.ExecuteNonQuery();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        if (reader["COLUMN21"].ToString().Contains(SIT_CONT)) return true;
+                    }
+                    return false;
+                }
+            }
+        }
+    }
 }
+

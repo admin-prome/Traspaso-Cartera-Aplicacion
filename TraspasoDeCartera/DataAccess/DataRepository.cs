@@ -121,21 +121,31 @@ public class DataRepository
         using (var connection = new SqlConnection(_connectionString))
         {
             connection.Open();
-            using (var command = new SqlCommand("SELECT TOP(1) P.COLUMN21 FROM FTP_PADRONSUR P, CRM.pnet_CreditBase C WHERE P.COLUMN20 LIKE '%'+C.pnet_nif AND C.pnet_OpportunityNumber=@Solicitud AND P.COLUMN19 LIKE '%'+@TIP_CTA+'%'",connection))
+            using (var command = new SqlCommand(
+                @"SELECT TOP(1) P.COLUMN21 
+          FROM FTP_PADRONSUR P
+          INNER JOIN CRM.pnet_CreditBase C ON P.COLUMN20 LIKE '%' + C.pnet_nif
+          WHERE C.pnet_OpportunityNumber = @Solicitud 
+            AND P.COLUMN19 LIKE '%' + @TIP_CTA + '%'", connection))
             {
+                command.CommandTimeout = 200;
                 command.Parameters.AddWithValue("@Solicitud", solicitud);
                 command.Parameters.AddWithValue("@TIP_CTA", TIP_CTA);
-                command.ExecuteNonQuery();
+
                 using (var reader = command.ExecuteReader())
                 {
-                    while (reader.Read())
+                    if (reader.Read())
                     {
-                        if (reader["COLUMN21"].ToString().Contains(SIT_CONT)) return true;
+                        if (reader["COLUMN21"].ToString().Contains(SIT_CONT))
+                        {
+                            return true;
+                        }
                     }
-                    return false;
                 }
             }
+            return false;
         }
+
     }
 }
 

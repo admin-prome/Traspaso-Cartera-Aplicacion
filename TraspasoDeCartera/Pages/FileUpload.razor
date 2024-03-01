@@ -18,6 +18,9 @@
 
 <div class="container mt-5">
     <h2 class="mb-4" style="color: black">Traspaso de Cartera</h2>
+
+    <button @onmouseenter="StartTimer" @onmouseleave="CancelTimer" class="help-button"><i class="bi bi-question-circle"></i></button>
+
     <div @ref="fileDropContainer" class="file-drop-zone @HoverClass"
     @ondragenter="OnDragEnter"
     @ondragleave="OnDragLeave" @ondragover:preventDefault="true"
@@ -141,6 +144,8 @@
     private IConfiguration configuration;
     private FtpManager _ftpManager;
     private bool showValidatedRows = false;
+    private bool showExcelFormat = false;
+    private CancellationTokenSource tokenSource;
     public FileUpload()
     {
 
@@ -215,7 +220,7 @@
             }
             // Upload CSV data to FTP server
             string ftpDirectory = "xxxxx"; // Adjust as needed
-            string remoteFileName = $"PROME_UPDATE_CREDITS_{currentDate}.txt"; 
+            string remoteFileName = $"PROME_UPDATE_CREDITS_{currentDate}.txt";
             //await _ftpManager.UploadDataAsync(csvBytes, remoteFileName, ftpDirectory);
             var traspasoDeCartera_Historial = new TraspasoDeCartera_Historial
                 {
@@ -285,5 +290,25 @@
             "success",
             new { confirmButtonText = "Close" }
         );
+    }
+    private async Task StartTimer()
+    {
+        tokenSource = new CancellationTokenSource();
+        await Task.Delay(250, tokenSource.Token); 
+        if (!tokenSource.Token.IsCancellationRequested)
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                showConfirmButton = false,
+                showCloseButton = true,
+                allowOutsideClick = true,
+                allowEscapeKey = true,
+                html = "<p>Aquí puedes ver un ejemplo del formato de Excel requerido para la carga de datos.</p><img src='/images/ExcelFormat.png' alt='Formato de Excel' style='height: 100px; width:450px;margin-bottom:10px' /><p>¡Arrastra el archivo o selecciónalo y espera mientras se validan los datos para confirmar los traspasos!</p>"
+            });
+        }
+    }
+    private void CancelTimer()
+    {
+        tokenSource?.Cancel(); 
     }
 }

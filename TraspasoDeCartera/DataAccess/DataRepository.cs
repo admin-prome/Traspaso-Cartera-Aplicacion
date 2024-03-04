@@ -122,11 +122,11 @@ public class DataRepository
         {
             connection.Open();
             using (var command = new SqlCommand(
-                @"SELECT TOP(1) P.COLUMN21 
-          FROM FTP_PADRONSUR P
-          INNER JOIN CRM.pnet_CreditBase C ON P.COLUMN20 LIKE '%' + C.pnet_nif
-          WHERE C.pnet_OpportunityNumber = @Solicitud 
-            AND P.COLUMN19 LIKE '%' + @TIP_CTA + '%'", connection))
+@"SELECT TOP(1) P.COLUMN21
+  FROM FTP_PADRONSUR P
+  INNER JOIN CRM.pnet_CreditBase C ON LTRIM(RTRIM(P.COLUMN20)) = C.pnet_nif
+  WHERE C.pnet_OpportunityNumber = @Solicitud
+    AND LTRIM(RTRIM(P.COLUMN19)) = @TIP_CTA", connection))
             {
                 command.CommandTimeout = 200;
                 command.Parameters.AddWithValue("@Solicitud", solicitud);

@@ -54,7 +54,14 @@
                                 <th>Estado</th>
                                 <th>Error</th>
                                 <th>
-                                    Ver Todas las Filas
+                                @if (showValidatedRows)
+                                {
+                                    <text>Ocultar Filas Correctas (@hiddenRowCount)</text>
+                                }
+                                else
+                                {
+                                    <text>Ver Todas las Filas (@hiddenRowCount)</text>
+                                }
                                     <button @onclick="ToggleVisibility" class="btn btn-link p-0 ml-2">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-down" viewBox="0 0 16 16">
                                             <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 1 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
@@ -146,6 +153,7 @@
     private bool showValidatedRows = false;
     private bool showExcelFormat = false;
     private CancellationTokenSource tokenSource;
+    private int hiddenRowCount;
     public FileUpload()
     {
 
@@ -153,7 +161,7 @@
     protected override void OnInitialized()
     {
         configuration = Configuration;
-        _repository = new DataRepository(configuration["DW2-ProvMicroDesa"]);
+        _repository = new DataRepository(configuration["DW2-Tecno"]);
         _excelValidator = new ExcelValidator(_repository);
         _ftpManager = new FtpManager(Configuration["FTPCRM-PublicServer"],
     Configuration["FTPCRM-Username"],
@@ -181,6 +189,7 @@
         clicked = false;
         IsProcessingFile = true;
         excelData = null;
+        showValidatedRows = false;
         foreach (var file in e.GetMultipleFiles())
         {
             using var stream = file.OpenReadStream(maxAllowedSize);
@@ -196,7 +205,11 @@
                     {
                         Console.WriteLine("Validation failed");
                     }
-                    // Update UI or perform further actions if needed
+                    else
+                    {
+                        showValidatedRows = true;
+                    }
+                    hiddenRowCount = excelData.Count(row => !row.HasError);
                     StateHasChanged(); // Ensure UI refreshes after updating data
                 }
             }

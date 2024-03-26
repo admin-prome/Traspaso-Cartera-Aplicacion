@@ -34,12 +34,12 @@ public class DataRepository
             }
 
 
-            bool creditVigency = CheckCreditVigency(excelRow.Solicitud);
+            //bool creditVigency = CheckCreditVigency(excelRow.Solicitud);
 
-            if (!creditVigency)
-            {
-                return (false, "El crédito no está vigente.");
-            }
+            //if (!creditVigency)
+            //{
+            //    return (false, "El crédito no está vigente.");
+            //}
             return (true, null);
 
         }

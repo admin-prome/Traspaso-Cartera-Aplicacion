@@ -10,13 +10,6 @@ namespace TraspasoDeCartera
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
-            System.Uri keyVaultEndpoint = new System.Uri(builder.Configuration["VaultUri"]);
-
-            builder.Configuration.AddAzureKeyVault(
-               keyVaultEndpoint,
-               new DefaultAzureCredential()
-            );
             builder.Services.AddRazorPages();
             builder.Services.AddServerSideBlazor();
 
